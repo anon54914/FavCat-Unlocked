@@ -19,27 +19,25 @@ using UnityEngine;
 using UnityEngine.Networking;
 using VRC.Core;
 using Object = UnityEngine.Object;
-using ImageDownloaderClosure = ImageDownloader.__c__DisplayClass11_1;
+using ImageDownloaderClosure = ImageDownloader.__c__DisplayClass11_1; ///was _1 before
 
-[assembly:MelonInfo(typeof(FavCatMod), "FavCat", "1.1.1", "knah", "https://github.com/knah/VRCMods")]
+[assembly: MelonInfo(typeof(FavCatMod), "FavCat-Unlocked", "1.2.1", "anon54914", "https://github.com/anon54914/FavCat-Unlocked")]
 [assembly:MelonGame("VRChat", "VRChat")]
 
 namespace FavCat
 {
     public class FavCatMod : MelonMod
     {
-        public static readonly DateTime NoMoreVisibleAvatarFavoritesAfter = new(2021, 05, 31);
-        
         public static LocalStoreDatabase? Database;
         internal static FavCatMod Instance;
 
         internal AvatarModule? AvatarModule;
         private WorldsModule? myWorldsModule;
-        internal PlayersModule? PlayerModule;
+        private PlayersModule? myPlayerModule;
         
         private static bool ourInitDone;
         
-        private static readonly ConcurrentQueue<Action> ToMainThreadQueue = new();
+        private static readonly ConcurrentQueue<Action> ToMainThreadQueue = new ConcurrentQueue<Action>();
 
         public override void OnApplicationStart()
         {
@@ -122,7 +120,7 @@ namespace FavCat
             try
             {
                 if (FavCatSettings.IsEnablePlayerFavs)
-                    PlayerModule = new PlayersModule();
+                    myPlayerModule = new PlayersModule();
             }
             catch (Exception ex)
             {
@@ -137,7 +135,7 @@ namespace FavCat
         {
             AvatarModule?.Update();
             myWorldsModule?.Update();
-            PlayerModule?.Update();
+            myPlayerModule?.Update();
             GlobalImageCache.OnUpdate();
 
             if (ToMainThreadQueue.TryDequeue(out var action))
@@ -255,6 +253,8 @@ namespace FavCat
 
                 var maybeUser = apiModel.TryCast<APIUser>();
                 if (maybeUser != null) FavCatMod.Database?.UpdateStoredPlayer(maybeUser);
+                var maybeAvatar = apiModel.TryCast<Avatar>();
+                if (maybeAvatar != null) FavCatMod.Database?.UpdateStoredAvatar(maybeAvatar);
                 var maybeWorld = apiModel.TryCast<ApiWorld>();
                 if (maybeWorld != null) FavCatMod.Database?.UpdateStoredWorld(maybeWorld);
             }
